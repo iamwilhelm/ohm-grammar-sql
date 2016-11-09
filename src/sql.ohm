@@ -1,0 +1,665 @@
+Sql {
+
+  // 19.6 prepare statement
+
+  PrepareableSqlDataStatement
+    = DynamicSelectStatement
+    //| DynamicSingleRowSelectStatement // unneeded DynamicSelectStatement covers this case
+    //| InsertStatement
+
+
+  DynamicSelectStatement
+    = CursorSpecification
+
+  // 5.1 SQL terminal character
+
+  Token
+    =  ident
+    | number
+
+  // 5.3 literal
+
+  UnsignedLiteral
+    = Token
+
+  ident  (an identifier)
+    = letter alnumscore*
+
+  number  (a number)
+    = digit* "." digit+  -- fract
+    | digit+             -- whole
+
+  alnumscore
+    = alnum
+    | "_"
+
+  // 5.3 literals
+
+  sign
+    = "+" | "-"
+
+  // 5.4 Names and identifiers
+
+  TableName
+    = LocalOrSchemaQualifiedName
+
+  // DomainName
+
+  SchemaName
+    = CatalogName "." UnqualifiedSchemaName -- dotted
+    | UnqualifiedSchemaName
+
+  CatalogName
+    = ident
+
+  SchemaQualifiedName
+    = (SchemaName ".")? QualifiedIdentifier
+
+  LocalOrSchemaQualifiedName
+    = LocalOrSchemaQualifier "." QualifiedIdentifier -- dotted
+    | QualifiedIdentifier
+
+  UnqualifiedSchemaName
+    = ident
+
+  LocalOrSchemaQualifier
+    = SchemaName
+    | "module"
+
+  QualifiedIdentifier
+    = ident
+
+  ColumnName
+    = ident
+
+  CorrelationName
+    = ident
+
+  QueryName
+    = ident
+
+  // SQL-client module name
+
+  ProcedureName
+    = ident
+
+  SchemaQualifiedRoutineName
+    = SchemaQualifiedName
+
+  // MethodNames
+  // SpecificNames
+  // CursorName
+  // LocalQualifiedName
+  // LocalQualifier
+  // HostParameterName
+  // SqlParameterName
+  // ConstraintName
+  // ExternalRoutineName
+  // TriggerName
+
+  CollationName
+    = SchemaQualifiedName
+
+  // CharacterSetName
+  // TransliterationName
+  // TranscodingName
+  // UserDefinedTypeName = SchemaQualifiedTypeName
+  // SchemaResolvedUserDefinedTypeName = UserDefinedTypeName
+  // SchemaQualifiedTypeName = (SchemaName ".")? QualifiedIdentifier
+  // AttributeName
+
+  FieldName
+    = ident
+
+  // SavePointName
+  // SequenceGeneratorName
+  // RoleName
+  // UserIdentifier
+  // ConnectionName
+  // SqlServerName
+  // ConnectionUserName
+  // SqlStatementName
+  // StatementName
+  // ExtendedStatementName
+  // DynamicCursorName
+  // ExtendedCursorName
+  // DescriptorName
+  // ScopeOption
+  // WindowName
+
+  // 6.3 value expression primary
+
+  ValueExpressionPrimary
+    = ParenthesizedValueExpression
+    | NonparenthesizedValueExpressionPrimary
+
+  ParenthesizedValueExpression
+    = "(" ValueExpression ")"
+
+  NonparenthesizedValueExpressionPrimary
+    = SetFunctionSpecification
+    //| WindowFunction
+    //| ScalarSubQuery
+    //| CaseExpression
+    //| CastSpecification
+    | FieldReference
+    //| SubtypeTreatment
+    //| MethodInvocation
+    //| StaticMethodInvocation
+    //| NewSpecification
+    //| AttributeOrMethodReference
+    //| ReferenceResolution
+    //| CollectionValueConstructor
+    //| ArrayElementReference
+    //| MultisetElementReference
+    //| RoutineInvocation
+    //| NextValueExpression
+    | ColumnReference
+    | UnsignedValueSpecification
+
+
+  // 6.4 value spec and target spec
+
+  UnsignedValueSpecification
+    = UnsignedLiteral
+    //| GeneralValueSpecification
+
+  //GeneralValueSpecification = "todo"
+
+  // 6.6 identifier chain
+
+  IdentifierChain
+  	= NonemptyListOf<ident, ".">
+
+  BasicIdentifierChain
+  	= IdentifierChain
+
+  // 6.7 column reference
+
+  ColumnReference
+  	= BasicIdentifierChain
+    | "module" "." QualifiedIdentifier "." ColumnName -- module
+
+  // 6.9 set function specification
+
+  SetFunctionSpecification
+  	= AggregateFunction
+    | GroupingOperation
+
+  GroupingOperation
+  	= "grouping" "(" NonemptyListOf<ColumnReference, ","> ")"
+
+  // 6.10 window function
+
+  RankFunctionType
+    = "rank"
+    | "dense rank"
+    | "percent rank"
+    | "cume dist"
+
+  // 6.14 field reference
+
+  FieldReference
+    = ValueExpressionPrimary "." FieldName
+
+  // 6.25 Value Expression
+
+  ValueExpression
+    = CommonValueExpression
+    | BooleanValueExpression
+    //| RowValueExpression
+
+  CommonValueExpression
+    = ReferenceValueExpression
+    //| CollectionValueExpression
+    //| DatetimeValueExpression
+    //| IntervalValueExpression
+    | StringValueExpression
+    | NumericValueExpression
+    //| UserDefinedTypeValueExpression
+
+  ReferenceValueExpression
+    = ValueExpressionPrimary
+
+  // 6.26 numeric value expression
+
+  NumericValueExpression
+    = Term
+    | NumericValueExpression "+" Term -- plus
+    | NumericValueExpression "-" Term -- minus
+
+  Term
+    = Factor
+    | Term "*" Factor -- asterisk
+    | Term "/" Factor -- solidus
+
+  Factor
+    = sign? NumericPrimary
+
+  NumericPrimary
+    = ValueExpressionPrimary
+    //| NumericValueFunction
+
+  // 6.28 string value expression
+
+  StringValueExpression
+    = ident
+
+  // 6.34 boolean value expression
+
+  // FIXME need extra space after "or" to get this to work
+  BooleanValueExpression
+    = BooleanValueExpression "or " BooleanTerm -- or
+	| BooleanTerm
+
+  BooleanTerm
+    = BooleanTerm "and" BooleanFactor -- and
+    | BooleanFactor
+
+  BooleanFactor
+    = "not"? BooleanTest
+
+  BooleanTest
+    = BooleanPrimary "is" "not"? TruthValue -- is
+    | BooleanPrimary
+
+
+  TruthValue
+    = "true"
+    | "false"
+    | "unknown"
+
+  BooleanPrimary
+    = Predicate
+    | BooleanPredicate
+
+  BooleanPredicate
+    = ParenthesizedBooleanValueExpression
+    | NonparenthesizedValueExpressionPrimary
+
+  ParenthesizedBooleanValueExpression
+    = "(" BooleanValueExpression ")"
+
+  // 7.2 row value expression
+
+  ContextuallyTypedRowValueConstructor
+    = RowValueSpecialCase
+    | ContextuallyTypedRowValueConstructor
+
+  RowValuePredicand
+    = RowValueSpecialCase
+    | ContextuallyTypedRowValueConstructor
+
+  RowValueSpecialCase
+    = NonparenthesizedValueExpressionPrimary
+
+  // 7.4 table expression
+
+  TableExpression
+    = FromClause WhereClause? GroupByClause? HavingClause?
+
+  // 7.5 from clause
+
+  FromClause
+    = "from" TableReferenceList
+
+  TableReferenceList
+    = ListOf<TableReference, ",">
+
+  // 7.6 table reference
+
+  TableReference
+    = TablePrimaryOrJoinedTable //SampleClause*
+
+  TablePrimaryOrJoinedTable
+    = JoinedTable
+    | TablePrimary
+
+
+  //SampleClause =
+
+  TablePrimary
+    = TableOrQueryName ("as" CorrelationName)? ("(" DerivedColumnList ")")? -- table_or_query_name
+    | "(" JoinedTable ")" -- joined_table
+
+  DerivedColumnList
+    = ColumnNameList
+
+  TableOrQueryName
+    = TableName
+    | QueryName
+
+  ColumnNameList
+    = ListOf<ColumnName, ",">
+
+  // 7.7 joined table
+
+  JoinedTable
+    = CrossJoin
+    | QualifiedJoin
+    | NaturalJoin
+    | UnionJoin
+
+  CrossJoin
+    = TableReference "cross" "join" TablePrimary
+
+  QualifiedJoin
+    = TableReference JoinType? "join" TableReference JoinSpecification
+
+  NaturalJoin
+    = TableReference "natural" JoinType? "join" TablePrimary
+
+  UnionJoin
+    = TableReference "union" "join" TablePrimary
+
+  JoinSpecification
+    = JoinCondition
+    | NamedColumnJoin
+
+  JoinCondition
+    = "on" SearchCondition
+
+  NamedColumnJoin
+    = "using" "(" JoinColumnList ")"
+
+  JoinType
+    = "inner"
+    | OuterJoinType "outer"? -- outer
+
+  OuterJoinType
+  	= "left"
+    | "right"
+    | "full"
+
+  JoinColumnList
+  	= ColumnNameList
+
+  // 7.8 where clause
+
+  WhereClause
+    = "where" SearchCondition
+
+  // 7.9 groupby clause
+
+  GroupByClause
+  	= "group by" SetQuantifier? GroupingElementList
+
+  GroupingElementList
+    = NonemptyListOf<GroupingElement, ",">
+
+  GroupingElement
+  	= OrdinaryGroupingSet
+    //| RollupList
+    //| CubeList
+    //| GroupingSetsSpecification
+    //| EmptyGroupingSet
+
+  OrdinaryGroupingSet
+  	= GroupingColumnReference
+    | "(" GroupingColumnReferenceList ")" -- parens
+
+  GroupingColumnReference
+  	= ColumnReference CollateClause?
+
+  GroupingColumnReferenceList
+  	= NonemptyListOf<GroupingColumnReference, ",">
+
+  // 7.10 having clause
+
+  HavingClause
+  	= "having" SearchCondition
+
+  // 7.12 query specifications
+
+  QuerySpecification
+    = "select" SetQuantifier* SelectList TableExpression
+
+  SelectList
+    = "*"
+    | NonemptyListOf<SelectSubList, ",">
+
+  SelectSubList
+    = DerivedColumn
+    | QualifiedAsterisk
+
+  QualifiedAsterisk
+    = AsteriskedIdentifierChain ".*" -- dot_asterisk
+    | AllFieldsReference
+
+  AsteriskedIdentifierChain
+    = ListOf<AsteriskedIdentifier, ".">
+
+  AsteriskedIdentifier
+    = ident
+
+  DerivedColumn
+    = ValueExpression AsClause?
+
+  AsClause
+    = "as" ColumnName
+
+  AllFieldsReference
+    = ValueExpressionPrimary ".*" ("as" "(" AllFieldsColumnNameList ")")?
+
+  AllFieldsColumnNameList
+    = ColumnNameList
+
+  // 7.13 query expression
+
+  QueryExpression
+    = QueryExpressionBody
+
+  QueryExpressionBody
+    = NonJoinQueryExpression
+    | JoinedTable
+
+  NonJoinQueryExpression
+    = NonJoinQueryTerm
+    | QueryExpressionBody "union" ("all" | "distinct")? CorrespondingSpec? QueryTerm -- union
+    | QueryExpressionBody "except" ("all" | "distinct")? CorrespondingSpec? QueryTerm -- expect
+
+  QueryTerm
+    = NonJoinQueryTerm
+    | JoinedTable
+
+  NonJoinQueryTerm
+    = NonJoinQueryPrimary
+    | QueryTerm "intersect" ("all" | "distinct")? CorrespondingSpec? QueryPrimary -- intersect
+
+  QueryPrimary
+    = NonJoinQueryPrimary
+    | JoinedTable
+
+  NonJoinQueryPrimary
+    = SimpleTable
+    | "(" NonJoinQueryExpression ")" -- non_join
+
+  SimpleTable
+    = QuerySpecification
+    //| TableValueConstructor
+    | ExplicitTable
+
+  ExplicitTable
+    = "table" TableOrQueryName
+
+  CorrespondingSpec
+    = "corresponding" ("by" "(" CorrespondingColumnList ")")
+
+  CorrespondingColumnList
+    = ColumnNameList
+
+  // 8.1 predicate
+
+  Predicate
+    = ComparisonPredicate
+    //| BetweenPredicate
+    //| InPredicate
+    //| LikePredicate
+    //| SimilarPredicate
+    | NullPredicate
+    //| QuantifiedComparisonPredicate
+    //| ExistsPredicate
+    //| UniquePredicate
+    //| NormalizedPredicate
+    //| MatchPredicate
+    //| OverlapsPredicate
+    //| DistinctPredicate
+    //| MemberPredicate
+    //| SubmultisetPredicate
+    //| SetPredicate
+    //| TypePredicate
+
+  // 8.2 comparison perdicate
+  ComparisonPredicate
+    = RowValuePredicand ComparisonPredicatePart2
+
+  ComparisonPredicatePart2
+    = CompOp RowValuePredicand
+
+  CompOp
+    = "="
+    | "<="
+    | ">="
+	  | "<>"
+    | "<"
+    | ">"
+
+  // 8.7 null predicate
+
+  NullPredicate
+    = RowValuePredicand NullPredicatePart2
+
+  NullPredicatePart2
+    = "is" "not"? "null"
+
+  // 8.19 search condition
+
+  SearchCondition
+    = BooleanValueExpression
+
+  // 10.7 collate clause
+
+  CollateClause
+  	= "collate" CollationName
+
+  // 10.9 aggregate function
+
+  AggregateFunction
+    = "count" "(" "*" ")" FilterClause? -- count
+    | GeneralSetFunction FilterClause? -- general_set
+    | BinarySetFunction FilterClause? -- binary_set
+    | OrderedSetFunction FilterClause? -- ordered_set
+
+  GeneralSetFunction
+   	= SetFunctionType "(" SetQuantifier? ValueExpression ")"
+
+  SetFunctionType
+    = ComputationalOperation
+
+  ComputationalOperation
+    = "ave"
+    | "max"
+    | "min"
+    | "sum"
+    | "every"
+    | "any"
+    | "some"
+    | "count"
+    | "stddev pop"
+    | "stddev samp"
+    | "var samp"
+    | "var pop"
+    | "collect"
+    | "fusion"
+    | "intersection"
+
+  SetQuantifier
+    = "distinct"
+    | "all"
+
+  FilterClause
+    = "filter" "(" WhereClause ")"
+
+  BinarySetFunction
+    = BinarySetFunctionType "(" DependentVariableExpression "," IndependentVariableExpression ")"
+
+  BinarySetFunctionType
+    = "covar_pop"
+    | "covar_samp"
+    | "corr"
+    | "regr_slope"
+    | "regr_intercept"
+    | "regr_r2"
+    | "regr_avgx"
+    | "regr_avgy"
+    | "regr_sxx"
+    | "regr_syy"
+    | "regr_sxy"
+
+  DependentVariableExpression
+    = NumericValueExpression
+
+  IndependentVariableExpression
+  	= NumericValueExpression
+
+  OrderedSetFunction
+    = HypotheticalSetFunction
+    | InverseDistributionFunction
+
+  HypotheticalSetFunction
+    = RankFunctionType "(" HypotheticalSetFunctionValueExpressionList ")" WithinGroupSpecification
+
+  WithinGroupSpecification
+    = "within" "group" "(" "order" "by" SortSpecificationList ")"
+
+  HypotheticalSetFunctionValueExpressionList
+    = NonemptyListOf<ValueExpression, ",">
+
+  InverseDistributionFunction
+    = InverseDistributionFunctionType "(" InverseDistributionFunctionArgument ")" WithinGroupSpecification
+
+  InverseDistributionFunctionArgument
+    = NumericValueExpression
+
+  InverseDistributionFunctionType
+    = "percentile" "cont"
+	  | "percentile" "disc"
+
+  // 10.10 sort specification list
+
+  SortSpecificationList
+    = NonemptyListOf<SortSpecification, ",">
+
+  SortSpecification
+    = SortKey OrderingSpecification? NullOrdering?
+
+  SortKey
+    = ValueExpression
+
+  OrderingSpecification
+    = "asc" | "desc"
+
+  NullOrdering
+    = "nulls" "first"
+    | "nulls" "last"
+
+  // 14.1 declare cursor
+
+  CursorSpecification
+    = QueryExpression OrderByClause?  LimitClause? //UpdateabilityClause?
+
+  OrderByClause
+    = "order" "by" SortSpecificationList
+
+  // 100.0 extra
+
+  LimitClause
+    = "limit" LimitAmount LimitOffset?
+
+  LimitAmount
+    = number
+    | "all"
+
+  LimitOffset
+    = "offset" number
+}

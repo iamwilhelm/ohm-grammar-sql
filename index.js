@@ -1,3 +1,7 @@
-exports.printMsg = function() {
-    console.log("This is a message from the demo package");
+"use strict";
+
+let grammar = require('./src/sql-grammar')
+
+module.exports = {
+  grammar: grammar
 }
