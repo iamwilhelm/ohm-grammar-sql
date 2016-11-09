@@ -1,0 +1,29 @@
+{
+  "name": "ohm-grammar-sql",
+  "version": "0.0.1",
+  "description": "Ohm grammar for SQL",
+  "main": "index.js",
+  "dependencies": {
+    "ohm-js": "^0.12.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iamwilhelm/ohm-grammar-sql.git"
+  },
+  "keywords": [
+    "ohm",
+    "sql",
+    "grammar",
+    "parser"
+  ],
+  "author": "Wil Chung",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/iamwilhelm/ohm-grammar-sql/issues"
+  },
+  "homepage": "https://github.com/iamwilhelm/ohm-grammar-sql#readme"
+}
