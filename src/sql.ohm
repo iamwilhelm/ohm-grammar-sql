@@ -23,7 +23,7 @@ Sql {
     = Token
 
   ident  (an identifier)
-    = letter alnumscore*
+    = ~keywords letter alnumscore*
 
   number  (a number)
     = digit* "." digit+  -- fract
@@ -37,6 +37,34 @@ Sql {
 
   sign
     = "+" | "-"
+
+  and = "and" ~alnum
+  as = "as" ~alnum
+  by = "by" ~alnum
+  cross = "cross" ~alnum
+  count = "count" ~alnum
+  from = "from" ~alnum
+  group = "group" ~alnum
+  grouping = "grouping" ~alnum
+  having = "having" ~alnum
+  inner = "inner" ~alnum
+  is = "is" ~alnum
+  join = "join" ~alnum
+  not = "not" ~alnum
+  module = "module" ~alnum
+  natural = "natural" ~alnum
+  on = "on" ~alnum
+  or = "or" ~alnum
+  outer = "outer" ~alnum
+  select = "select" ~alnum
+  union = "union" ~alnum
+  using = "using" ~alnum
+  where = "where" ~alnum
+
+  keywords
+    = and | as | by | cross | count | from | group | grouping | having
+    | inner | is | join | not | natural | module | on | or | outer
+    | select | union | using | where
 
   // 5.4 Names and identifiers
 
@@ -64,7 +92,7 @@ Sql {
 
   LocalOrSchemaQualifier
     = SchemaName
-    | "module"
+    | module
 
   QualifiedIdentifier
     = ident
@@ -178,7 +206,7 @@ Sql {
 
   ColumnReference
   	= BasicIdentifierChain
-    | "module" "." QualifiedIdentifier "." ColumnName -- module
+    | module "." QualifiedIdentifier "." ColumnName -- module
 
   // 6.9 set function specification
 
@@ -187,7 +215,7 @@ Sql {
     | GroupingOperation
 
   GroupingOperation
-  	= "grouping" "(" NonemptyListOf<ColumnReference, ","> ")"
+  	= grouping "(" NonemptyListOf<ColumnReference, ","> ")"
 
   // 6.10 window function
 
@@ -247,22 +275,20 @@ Sql {
 
   // 6.34 boolean value expression
 
-  // FIXME need extra space after "or" to get this to work
   BooleanValueExpression
-    = BooleanValueExpression "or " BooleanTerm -- or
-	| BooleanTerm
+    = BooleanValueExpression or BooleanTerm -- or
+	  | BooleanTerm
 
   BooleanTerm
-    = BooleanTerm "and" BooleanFactor -- and
+    = BooleanTerm and BooleanFactor -- and
     | BooleanFactor
 
   BooleanFactor
-    = "not"? BooleanTest
+    = not? BooleanTest
 
   BooleanTest
-    = BooleanPrimary "is" "not"? TruthValue -- is
+    = BooleanPrimary is not? TruthValue -- is
     | BooleanPrimary
-
 
   TruthValue
     = "true"
@@ -301,7 +327,7 @@ Sql {
   // 7.5 from clause
 
   FromClause
-    = "from" TableReferenceList
+    = from TableReferenceList
 
   TableReferenceList
     = ListOf<TableReference, ",">
@@ -319,7 +345,7 @@ Sql {
   //SampleClause =
 
   TablePrimary
-    = TableOrQueryName ("as" CorrelationName)? ("(" DerivedColumnList ")")? -- table_or_query_name
+    = TableOrQueryName (as CorrelationName)? ("(" DerivedColumnList ")")? -- table_or_query_name
     | "(" JoinedTable ")" -- joined_table
 
   DerivedColumnList
@@ -341,30 +367,30 @@ Sql {
     | UnionJoin
 
   CrossJoin
-    = TableReference "cross" "join" TablePrimary
+    = TableReference cross join TablePrimary
 
   QualifiedJoin
-    = TableReference JoinType? "join" TableReference JoinSpecification
+    = TableReference JoinType? join TableReference JoinSpecification
 
   NaturalJoin
-    = TableReference "natural" JoinType? "join" TablePrimary
+    = TableReference natural JoinType? join TablePrimary
 
   UnionJoin
-    = TableReference "union" "join" TablePrimary
+    = TableReference union join TablePrimary
 
   JoinSpecification
     = JoinCondition
     | NamedColumnJoin
 
   JoinCondition
-    = "on" SearchCondition
+    = on SearchCondition
 
   NamedColumnJoin
-    = "using" "(" JoinColumnList ")"
+    = using "(" JoinColumnList ")"
 
   JoinType
-    = "inner"
-    | OuterJoinType "outer"? -- outer
+    = inner
+    | OuterJoinType outer? -- outer
 
   OuterJoinType
   	= "left"
@@ -377,12 +403,12 @@ Sql {
   // 7.8 where clause
 
   WhereClause
-    = "where" SearchCondition
+    = where SearchCondition
 
   // 7.9 groupby clause
 
   GroupByClause
-  	= "group by" SetQuantifier? GroupingElementList
+  	= group by SetQuantifier? GroupingElementList
 
   GroupingElementList
     = NonemptyListOf<GroupingElement, ",">
@@ -407,12 +433,12 @@ Sql {
   // 7.10 having clause
 
   HavingClause
-  	= "having" SearchCondition
+  	= having SearchCondition
 
   // 7.12 query specifications
 
   QuerySpecification
-    = "select" SetQuantifier* SelectList TableExpression
+    = select SetQuantifier* SelectList TableExpression
 
   SelectList
     = "*"
@@ -436,10 +462,10 @@ Sql {
     = ValueExpression AsClause?
 
   AsClause
-    = "as" ColumnName
+    = as ColumnName
 
   AllFieldsReference
-    = ValueExpressionPrimary ".*" ("as" "(" AllFieldsColumnNameList ")")?
+    = ValueExpressionPrimary ".*" (as "(" AllFieldsColumnNameList ")")?
 
   AllFieldsColumnNameList
     = ColumnNameList
@@ -455,7 +481,7 @@ Sql {
 
   NonJoinQueryExpression
     = NonJoinQueryTerm
-    | QueryExpressionBody "union" ("all" | "distinct")? CorrespondingSpec? QueryTerm -- union
+    | QueryExpressionBody union ("all" | "distinct")? CorrespondingSpec? QueryTerm -- union
     | QueryExpressionBody "except" ("all" | "distinct")? CorrespondingSpec? QueryTerm -- expect
 
   QueryTerm
@@ -530,7 +556,7 @@ Sql {
     = RowValuePredicand NullPredicatePart2
 
   NullPredicatePart2
-    = "is" "not"? "null"
+    = is not? "null"
 
   // 8.19 search condition
 
@@ -545,7 +571,7 @@ Sql {
   // 10.9 aggregate function
 
   AggregateFunction
-    = "count" "(" "*" ")" FilterClause? -- count
+    = count "(" "*" ")" FilterClause? -- count
     | GeneralSetFunction FilterClause? -- general_set
     | BinarySetFunction FilterClause? -- binary_set
     | OrderedSetFunction FilterClause? -- ordered_set
