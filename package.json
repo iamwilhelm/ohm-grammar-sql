@@ -1,6 +1,6 @@
 {
   "name": "ohm-grammar-sql",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Ohm grammar for SQL",
   "main": "index.js",
   "dependencies": {
