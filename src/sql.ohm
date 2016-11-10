@@ -38,6 +38,13 @@ Sql {
   sign
     = "+" | "-"
 
+  equal = "="
+  lessThanEqual = "<="
+  greaterThanEqual = ">="
+  notEqual = "<>"
+  lessThan = "<"
+  greaterThan = ">"
+
   and = "and" ~alnum
   as = "as" ~alnum
   by = "by" ~alnum
@@ -543,12 +550,8 @@ Sql {
     = CompOp RowValuePredicand
 
   CompOp
-    = "="
-    | "<="
-    | ">="
-	  | "<>"
-    | "<"
-    | ">"
+    = equal | lessThanEqual | greaterThanEqual
+    | notEqual | lessThan | greaterThan
 
   // 8.7 null predicate
 
